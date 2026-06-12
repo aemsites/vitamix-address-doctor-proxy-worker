@@ -25,6 +25,20 @@ test('handles successful validation and adds cors headers', async () => {
   assert.equal(body.action, 'CONFIRM');
 });
 
+test('optionally includes raw AddressDoctor XML when requested', async () => {
+  const response = await handleRequest(request('/places/validate?raw=1'), env, async () => new Response(fixture));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.action, 'CONFIRM');
+  assert.equal(body.debug.rawAddressDoctorXml, fixture);
+});
+
+test('does not include raw XML unless requested', async () => {
+  const response = await handleRequest(request('/places/validate'), env, async () => new Response(fixture));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).debug, undefined);
+});
+
 test('default export delegates to handleRequest', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(fixture);
@@ -113,5 +127,7 @@ test('parseJson and validatePayload internals cover success branches', async () 
   const parsed = await testInternals.parseJson(new Request('https://x.test', { method: 'POST', body: '{"ok":true}' }));
   assert.deepEqual(parsed.data, { ok: true });
   assert.equal(testInternals.validatePayload({ address: { addressLines: [' x '], components: {} } }), null);
+  assert.equal(testInternals.rawResponseRequested(new Request('https://x.test/places/validate?raw=true')), true);
+  assert.equal(testInternals.rawResponseRequested(new Request('https://x.test/places/validate?raw=0')), false);
   assert.match(testInternals.requestId(), /.+/);
 });

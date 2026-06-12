@@ -34,6 +34,11 @@ function validatePayload(data) {
   return null;
 }
 
+function rawResponseRequested(request) {
+  const url = new URL(request.url);
+  return ['1', 'true'].includes(url.searchParams.get('raw') || '');
+}
+
 async function handleValidate(request, env, fetchImpl) {
   const parsed = await parseJson(request);
   if (parsed.error) return parsed.error;
@@ -61,7 +66,11 @@ async function handleValidate(request, env, fetchImpl) {
   if (!upstream.ok) return errorResponse(502, 'upstream_error', 'address validation failed', id);
 
   try {
-    return jsonResponse(normalizeAddressDoctorResponse(upstream.text));
+    const normalized = normalizeAddressDoctorResponse(upstream.text);
+    if (rawResponseRequested(request)) {
+      normalized.debug = { rawAddressDoctorXml: upstream.text };
+    }
+    return jsonResponse(normalized);
   } catch (error) {
     console.error('addressdoctor parse failed', { requestId: id, message: error.message });
     return errorResponse(502, 'upstream_error', 'address validation failed', id);
@@ -94,4 +103,9 @@ export default {
   },
 };
 
-export const testInternals = { parseJson, validatePayload, requestId };
+export const testInternals = {
+  parseJson,
+  rawResponseRequested,
+  requestId,
+  validatePayload,
+};

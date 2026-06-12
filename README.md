@@ -30,6 +30,21 @@ Response:
 }
 ```
 
+## Raw response debugging
+
+For production debugging, the same endpoint can return AddressDoctor's raw SOAP XML response when the request URL includes `?raw=1` or `?raw=true`.
+
+Example:
+
+```bash
+curl -X POST 'https://{worker-host}/places/validate?raw=1' \
+  -H 'Origin: https://uat.vitamix.com' \
+  -H 'Content-Type: application/json' \
+  --data '{"address":{"addressLines":["123 William Street","New York, NY 10038"],"regionCode":"US"}}'
+```
+
+The response includes `debug.rawAddressDoctorXml`. This field contains address data, so only use it for temporary troubleshooting and do not log or share it outside the debugging flow.
+
 ## Secrets
 
 Set real values only through Worker secrets:
