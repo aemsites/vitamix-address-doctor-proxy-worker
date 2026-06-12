@@ -1,0 +1,43 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <ProcessResponse xmlns="http://validator5.AddressDoctor.com/Webservice5/v2">
+      <ProcessResult>
+        <StatusCode>100</StatusCode>
+        <StatusMessage>OK</StatusMessage>
+        <JobToken>5cf0b119-2c3f-4c67-a86e-5b5a5633b83d</JobToken>
+        <Results>
+          <Result>
+            <ProcessStatus>I3</ProcessStatus>
+            <CountryISO3>USA</CountryISO3>
+            <ResultDataSet>
+              <ResultData>
+                <ResultNumber>1</ResultNumber>
+                <MailabilityScore>4</MailabilityScore>
+                <ResultPercentage>64.07</ResultPercentage>
+                <ElementInputStatus>40606050000000000060</ElementInputStatus>
+                <ElementResultStatus>78F0F8E08000000000E0</ElementResultStatus>
+                <ElementRelevance>11101010100000000010</ElementRelevance>
+                <ExtElementStatus>00000000000000000000</ExtElementStatus>
+                <AddressResolutionCode>00000000000000000000</AddressResolutionCode>
+                <AddressType>H</AddressType>
+                <LanguageISO3>ENG</LanguageISO3>
+                <Address>
+                  <Street><string>100 Park St</string></Street>
+                  <HouseNumber><string>100</string></HouseNumber>
+                  <Locality><string>New York</string></Locality>
+                  <PostalCode><string>10013-4312</string></PostalCode>
+                  <Province><string>NY</string><string>New York</string></Province>
+                  <Country><string>US</string></Country>
+                  <DeliveryAddressLines><string>100 Park St</string></DeliveryAddressLines>
+                  <CountrySpecificLocalityLine><string>New York NY 10013-4312</string></CountrySpecificLocalityLine>
+                  <FormattedAddress><string>100 Park St</string><string>New York NY 10013-4312</string></FormattedAddress>
+                  <AddressComplete>100 Park St;New York NY 10013-4312</AddressComplete>
+                </Address>
+              </ResultData>
+            </ResultDataSet>
+          </Result>
+        </Results>
+      </ProcessResult>
+    </ProcessResponse>
+  </soap:Body>
+</soap:Envelope>

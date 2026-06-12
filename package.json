@@ -1,0 +1,17 @@
+{
+  "name": "vitamix-address-doctor-proxy-worker",
+  "version": "1.0.0",
+  "description": "Vitamix AddressDoctor proxy worker",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "lint": "eslint .",
+    "test": "c8 --100 --reporter=text --reporter=lcov node --test test/*.test.js",
+    "coverage": "c8 --100 --reporter=text --reporter=html node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "c8": "^10.1.3",
+    "eslint": "^9.39.1"
+  }
+}

@@ -1,0 +1,10 @@
+name = "vitamix-address-doctor-proxy-worker"
+main = "src/index.js"
+compatibility_date = "2026-06-12"
+
+[vars]
+ADDRESS_DOCTOR_PROCESS_MODE = "INTERACTIVE"
+ADDRESS_DOCTOR_DEFAULT_COUNTRY_ISO3 = "USA"
+ADDRESS_DOCTOR_COUNTRY_TYPE = "ISO2"
+ADDRESS_DOCTOR_MAX_RESULT_COUNT = "0"
+ADDRESS_DOCTOR_TIMEOUT_MS = "5000"
