@@ -19,12 +19,26 @@ export function stringsTag(name, values) {
   return strings ? `<${name}>${strings}</${name}>` : '';
 }
 
-export function parseAddressLines(address) {
-  const lines = Array.isArray(address.addressLines) ? address.addressLines.filter(Boolean) : [];
+function parseLocalityLine(line = '') {
+  const match = line.trim().match(/^(.+?),\s*([A-Za-z]{2})\s+(.+)$/);
+  if (!match) return { locality: '', province: '', postalCode: '' };
   return {
-    addressComplete: lines.join(';'),
-    street: lines[0] || '',
-    localityLine: lines[lines.length - 1] || '',
+    locality: match[1].trim(),
+    province: match[2].trim(),
+    postalCode: match[3].trim(),
+  };
+}
+
+export function parseAddressLines(address) {
+  const lines = Array.isArray(address.addressLines)
+    ? address.addressLines.map((line) => String(line || '').trim()).filter(Boolean)
+    : [];
+  const localityLine = lines.length > 1 ? lines.at(-1) : '';
+  const streetLines = localityLine ? lines.slice(0, -1) : lines;
+  return {
+    deliveryAddressLine: streetLines.join(' '),
+    localityLine,
+    ...parseLocalityLine(localityLine),
   };
 }
 
@@ -32,14 +46,14 @@ export function addressXml(address) {
   const components = address.components || {};
   const parsed = parseAddressLines(address);
   const country = components.country || address.regionCode || '';
+  const deliveryAddressLine = [components.street || parsed.deliveryAddressLine, components.addressLine2]
+    .filter(Boolean).join(' ');
   return [
-    stringsTag('Street', components.street || parsed.street),
-    stringsTag('SubBuilding', components.addressLine2),
-    stringsTag('Locality', components.locality),
-    stringsTag('PostalCode', components.postalCode),
-    stringsTag('Province', components.province),
+    stringsTag('Locality', components.locality || parsed.locality),
+    stringsTag('PostalCode', components.postalCode || parsed.postalCode),
+    stringsTag('Province', components.province || parsed.province),
     stringsTag('Country', country),
-    tag('AddressComplete', parsed.addressComplete || parsed.localityLine),
+    stringsTag('DeliveryAddressLines', deliveryAddressLine),
   ].join('');
 }
 

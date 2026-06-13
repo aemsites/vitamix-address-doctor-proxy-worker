@@ -43,17 +43,18 @@ test('buildSoapEnvelope maps structured fields and escapes secrets/input', () =>
   assert.match(xml, /<password>pw&quot;&apos;<\/password>/);
   assert.match(xml, /<JobToken>job-1<\/JobToken>/);
   assert.match(xml, /<MaxResultCount>5<\/MaxResultCount>/);
-  assert.match(xml, /<Street><string>100 &amp; Park St<\/string><\/Street>/);
-  assert.match(xml, /<SubBuilding><string>Apt &quot;2&quot;<\/string><\/SubBuilding>/);
-  assert.match(xml, /<AddressComplete>100 &lt;Park&gt; St;New York, NY 10005<\/AddressComplete>/);
+  assert.match(xml, /<Locality><string>New &lt;York&gt;<\/string><\/Locality>/);
+  assert.match(xml, /<DeliveryAddressLines><string>100 &amp; Park St Apt &quot;2&quot;<\/string><\/DeliveryAddressLines>/);
+  assert.doesNotMatch(xml, /<AddressComplete>/);
+  assert.doesNotMatch(xml, /<Street>/);
 });
 
 test('buildSoapEnvelope omits empty optional fields and job token', () => {
   const xml = buildSoapEnvelope({ addressLines: ['Line 1'], regionCode: 'CA' }, { ...config, jobToken: '', maxResultCount: 0 });
   assert.doesNotMatch(xml, /ServiceParameters/);
-  assert.match(xml, /<Street><string>Line 1<\/string><\/Street>/);
+  assert.match(xml, /<DeliveryAddressLines><string>Line 1<\/string><\/DeliveryAddressLines>/);
   assert.match(xml, /<Country><string>CA<\/string><\/Country>/);
-  assert.match(xml, /<AddressComplete>Line 1<\/AddressComplete>/);
+  assert.doesNotMatch(xml, /<AddressComplete>/);
 });
 
 test('callAddressDoctor posts SOAP with required headers', async () => {
@@ -111,8 +112,19 @@ test('SOAP helper edge cases are covered', () => {
   assert.equal(stringsTag('A', 'x'), '<A><string>x</string></A>');
   assert.equal(stringsTag('A', ['x', '', null, undefined, 'y']), '<A><string>x</string><string>y</string></A>');
   assert.equal(stringsTag('A', ['', null]), '');
-  assert.deepEqual(parseAddressLines({ addressLines: null }), { addressComplete: '', street: '', localityLine: '' });
-  assert.deepEqual(parseAddressLines({ addressLines: ['a', '', 'b'] }), { addressComplete: 'a;b', street: 'a', localityLine: 'b' });
-  assert.match(addressXml({ addressLines: [], components: { street: 'S' } }), /<Street><string>S<\/string><\/Street>/);
+  assert.deepEqual(parseAddressLines({ addressLines: null }), {
+    deliveryAddressLine: '', localityLine: '', locality: '', province: '', postalCode: '',
+  });
+  assert.deepEqual(parseAddressLines({ addressLines: ['123 William Street', '123', 'New York, NY 10038'] }), {
+    deliveryAddressLine: '123 William Street 123',
+    localityLine: 'New York, NY 10038',
+    locality: 'New York',
+    province: 'NY',
+    postalCode: '10038',
+  });
+  assert.deepEqual(parseAddressLines({ addressLines: ['a', null, 'b'] }), {
+    deliveryAddressLine: 'a', localityLine: 'b', locality: '', province: '', postalCode: '',
+  });
+  assert.match(addressXml({ addressLines: [], components: { street: 'S' } }), /<DeliveryAddressLines><string>S<\/string><\/DeliveryAddressLines>/);
   assert.match(addressXml({ addressLines: ['S'], regionCode: 'US' }), /<Country><string>US<\/string><\/Country>/);
 });
