@@ -43,6 +43,7 @@ test('buildSoapEnvelope maps structured fields and escapes secrets/input', () =>
   assert.match(xml, /<password>pw&quot;&apos;<\/password>/);
   assert.match(xml, /<JobToken>job-1<\/JobToken>/);
   assert.match(xml, /<MaxResultCount>5<\/MaxResultCount>/);
+  assert.match(xml, /<MatchingScope>ALL<\/MatchingScope>/);
   assert.match(xml, /<Locality><string>New &lt;York&gt;<\/string><\/Locality>/);
   assert.match(xml, /<DeliveryAddressLines><string>100 &amp; Park St Apt &quot;2&quot;<\/string><\/DeliveryAddressLines>/);
   assert.doesNotMatch(xml, /<AddressComplete>/);
