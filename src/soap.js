@@ -79,7 +79,7 @@ export function buildSoapEnvelope(address, config) {
     tag('GlobalCasing', 'MIXED') +
     tag('GlobalMaxLength', '0') +
     tag('GlobalPreferredDescriptor', 'SHORT') +
-    tag('MatchingScope', 'DELIVERYPOINT_LEVEL') +
+    tag('MatchingScope', 'ALL') +
     tag('MaxResultCount', config.maxResultCount) +
     tag('DualAddressPriority', 'DELIVERY_SERVICE') +
     tag('StandardizeInvalidAddresses', 'true') +
