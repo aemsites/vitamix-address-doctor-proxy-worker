@@ -22,14 +22,14 @@ test('handles successful validation and adds cors headers', async () => {
   assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
   assert.equal(response.headers.get('Cache-Control'), 'no-store');
   const body = await response.json();
-  assert.equal(body.action, 'CONFIRM');
+  assert.equal(body.action, 'CONFIRM_UNVALIDATED');
 });
 
 test('optionally includes raw AddressDoctor XML when requested', async () => {
   const response = await handleRequest(request('/places/validate?raw=1'), env, async () => new Response(fixture));
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.action, 'CONFIRM');
+  assert.equal(body.action, 'CONFIRM_UNVALIDATED');
   assert.equal(body.debug.rawAddressDoctorXml, fixture);
 });
 

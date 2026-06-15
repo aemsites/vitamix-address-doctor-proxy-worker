@@ -5,20 +5,13 @@ import { normalizeAddressDoctorResponse, testInternals } from '../src/normalize.
 
 const fixture = readFileSync(new URL('./fixtures/process-response-ok.xml', import.meta.url), 'utf8');
 
-test('normalizes sample I3 response with a usable suggestion to CONFIRM', () => {
+test('normalizes sample single-result I3 response to CONFIRM_UNVALIDATED', () => {
   const result = normalizeAddressDoctorResponse(fixture);
   assert.equal(result.provider, 'addressdoctor');
-  assert.equal(result.action, 'CONFIRM');
-  assert.equal(result.formattedAddress, '100 Park St, New York NY 10013-4312');
-  assert.equal(result.uspsDeliverable, true);
-  assert.deepEqual(result.addressComponents, [
-    { longText: '100', shortText: '100', types: ['street_number'] },
-    { longText: 'Park St', shortText: 'Park St', types: ['route'] },
-    { longText: 'New York', shortText: 'New York', types: ['locality'] },
-    { longText: 'New York', shortText: 'NY', types: ['administrative_area_level_1'] },
-    { longText: '10013-4312', shortText: '10013-4312', types: ['postal_code'] },
-    { longText: 'US', shortText: 'US', types: ['country'] },
-  ]);
+  assert.equal(result.action, 'CONFIRM_UNVALIDATED');
+  assert.equal(result.formattedAddress, null);
+  assert.equal(result.uspsDeliverable, false);
+  assert.equal(result.addressComponents, null);
   assert.deepEqual(result.diagnostics, {
     statusCode: 100,
     statusMessage: 'OK',
@@ -108,12 +101,23 @@ test('maps corrected and suggestion statuses to CONFIRM when deliverability is f
 });
 
 test('test internals cover XML helpers and edge cases', () => {
-  const { actionFor, block, component, decodeXml, first, numberValue, stripHouseNumber, strings } = testInternals;
+  const {
+    actionFor,
+    block,
+    blockCount,
+    component,
+    decodeXml,
+    first,
+    numberValue,
+    stripHouseNumber,
+    strings,
+  } = testInternals;
   assert.equal(decodeXml('&lt;&gt;&quot;&apos;&amp;'), '<>"\'&');
   assert.equal(first('<A x="1"> hi&amp;bye </A>', 'A'), 'hi&bye');
   assert.equal(first('<B/>', 'A'), null);
   assert.equal(block('<A>inside</A>', 'A'), 'inside');
   assert.equal(block('<B/>', 'A'), '');
+  assert.equal(blockCount('<A>1</A><A>2</A>', 'A'), 2);
   assert.deepEqual(strings('<X><string> a </string><string></string></X>', 'X'), ['a']);
   assert.deepEqual(strings('<Y/>', 'X'), []);
   assert.equal(numberValue(null), null);
@@ -126,7 +130,8 @@ test('test internals cover XML helpers and edge cases', () => {
   assert.equal(actionFor('V3', 5, 100, [{ types: ['route'] }], 'Main St'), 'CONFIRM');
   assert.equal(actionFor('C4', 1, 100, [{ types: ['route'] }], 'Main St'), 'FIX');
   assert.equal(actionFor('I3', 0, 0, [], null), 'CONFIRM_UNVALIDATED');
-  assert.equal(actionFor('I3', 0, 0, [{ types: ['route'] }], 'Main St'), 'CONFIRM');
+  assert.equal(actionFor('I3', 0, 0, [{ types: ['route'] }], 'Main St'), 'CONFIRM_UNVALIDATED');
+  assert.equal(actionFor('I3', 0, 0, [{ types: ['route'] }], 'Main St', true), 'CONFIRM');
   assert.equal(actionFor(null, 5, 100, [{ types: ['route'] }], 'Main St'), 'FIX');
   assert.equal(actionFor('V4', 5, 100, [{ types: ['route'] }], null), 'FIX');
   assert.deepEqual(component('', 'short', 'country'), { longText: 'short', shortText: 'short', types: ['country'] });
