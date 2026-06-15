@@ -78,10 +78,12 @@ function formattedAddress(addressXml) {
 function actionFor(processStatus, mailabilityScore, resultPercentage, components, formatted) {
   const category = processStatus?.[0] || '';
   if (['N', 'W'].includes(category)) return 'FIX';
-  if (category === 'I' && mailabilityScore < 4) return 'FIX';
+  if (category === 'I') {
+    return formatted && components.length ? 'CONFIRM' : 'CONFIRM_UNVALIDATED';
+  }
   if (!formatted || !components.length) return 'FIX';
   if (category === 'V' && processStatus === 'V4' && resultPercentage >= 99) return 'ACCEPT';
-  if (['V', 'C', 'I', 'Q'].includes(category) && mailabilityScore >= 2) return 'CONFIRM';
+  if (['V', 'C', 'Q'].includes(category) && mailabilityScore >= 2) return 'CONFIRM';
   return 'FIX';
 }
 
@@ -101,12 +103,14 @@ export function normalizeAddressDoctorResponse(xml) {
   const formatted = formattedAddress(address);
   const action = actionFor(processStatus, mailabilityScore, resultPercentage, components, formatted);
 
+  const unvalidated = action === 'CONFIRM_UNVALIDATED';
+
   return {
     provider: 'addressdoctor',
     action,
-    formattedAddress: formatted,
-    addressComponents: components.length ? components : null,
-    uspsDeliverable: mailabilityScore >= 4,
+    formattedAddress: unvalidated ? null : formatted,
+    addressComponents: unvalidated ? null : (components.length ? components : null),
+    uspsDeliverable: unvalidated ? false : mailabilityScore >= 4,
     diagnostics: {
       statusCode,
       statusMessage,

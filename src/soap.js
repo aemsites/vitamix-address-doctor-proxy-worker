@@ -58,8 +58,12 @@ export function addressXml(address) {
 }
 
 export function buildSoapEnvelope(address, config) {
-  const serviceParameters = config.jobToken
-    ? `<ServiceParameters>${tag('JobToken', config.jobToken)}</ServiceParameters>`
+  const serviceParameterTags = [
+    tag('JobToken', config.jobToken),
+    tag('UseTransactionPool', config.transactionPool),
+  ].join('');
+  const serviceParameters = serviceParameterTags
+    ? `<ServiceParameters>${serviceParameterTags}</ServiceParameters>`
     : '';
   return `<?xml version="1.0" encoding="utf-8"?>` +
     `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">` +
@@ -79,7 +83,7 @@ export function buildSoapEnvelope(address, config) {
     tag('GlobalCasing', 'MIXED') +
     tag('GlobalMaxLength', '0') +
     tag('GlobalPreferredDescriptor', 'SHORT') +
-    tag('MatchingScope', 'ALL') +
+    tag('MatchingScope', config.matchingScope) +
     tag('MaxResultCount', config.maxResultCount) +
     tag('DualAddressPriority', 'DELIVERY_SERVICE') +
     tag('StandardizeInvalidAddresses', 'true') +

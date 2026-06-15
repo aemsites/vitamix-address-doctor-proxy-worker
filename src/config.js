@@ -18,6 +18,8 @@ export function loadConfig(env = {}) {
     processMode: env.ADDRESS_DOCTOR_PROCESS_MODE || 'INTERACTIVE',
     defaultCountryISO3: env.ADDRESS_DOCTOR_DEFAULT_COUNTRY_ISO3 || 'USA',
     countryType: env.ADDRESS_DOCTOR_COUNTRY_TYPE || 'ISO2',
+    matchingScope: env.ADDRESS_DOCTOR_MATCHING_SCOPE || 'DELIVERYPOINT_LEVEL',
+    transactionPool: env.ADDRESS_DOCTOR_TRANSACTION_POOL || 'PRODUCTION',
     timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 5000,
     maxResultCount: Number.isFinite(maxResultCount) && maxResultCount >= 0 ? maxResultCount : 0,
   };
