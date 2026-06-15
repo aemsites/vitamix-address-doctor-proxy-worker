@@ -5,7 +5,7 @@ import { normalizeAddressDoctorResponse, testInternals } from '../src/normalize.
 
 const fixture = readFileSync(new URL('./fixtures/process-response-ok.xml', import.meta.url), 'utf8');
 
-test('normalizes sample I3 response to CONFIRM with Google-compatible components', () => {
+test('normalizes sample I3 response with a usable suggestion to CONFIRM', () => {
   const result = normalizeAddressDoctorResponse(fixture);
   assert.equal(result.provider, 'addressdoctor');
   assert.equal(result.action, 'CONFIRM');
@@ -33,6 +33,29 @@ test('normalizes sample I3 response to CONFIRM with Google-compatible components
     extElementStatus: '00000000000000000000',
     addressResolutionCode: '00000000000000000000',
   });
+});
+
+test('maps I2 invalid results without suggestions to CONFIRM_UNVALIDATED', () => {
+  const xml = '<ProcessResult><StatusCode>100</StatusCode><StatusMessage>OK</StatusMessage><Result><ProcessStatus>I2</ProcessStatus><ResultDataSet><ResultData><MailabilityScore>0</MailabilityScore><ResultPercentage>0</ResultPercentage><AddressType>U</AddressType><Address><AddressComplete>999 New Development Rd;Bolivia NC 28422</AddressComplete></Address></ResultData></ResultDataSet></Result></ProcessResult>';
+  const result = normalizeAddressDoctorResponse(xml);
+  assert.equal(result.action, 'CONFIRM_UNVALIDATED');
+  assert.equal(result.formattedAddress, null);
+  assert.equal(result.addressComponents, null);
+  assert.equal(result.uspsDeliverable, false);
+  assert.equal(result.diagnostics.processStatus, 'I2');
+  assert.equal(result.diagnostics.mailabilityScore, 0);
+  assert.equal(result.diagnostics.resultPercentage, 0);
+  assert.equal(result.diagnostics.addressType, 'U');
+});
+
+test('maps I3 low-confidence alternatives with usable suggestions to CONFIRM', () => {
+  const xml = '<ProcessResult><StatusCode>100</StatusCode><StatusMessage>OK</StatusMessage><Result><ProcessStatus>I3</ProcessStatus><ResultDataSet><ResultData><MailabilityScore>1</MailabilityScore><ResultPercentage>75.09</ResultPercentage><Address><HouseNumber><string>999999</string></HouseNumber><Street><string>999999 William St</string></Street><Locality><string>New York</string></Locality><Province><string>NY</string></Province><PostalCode><string>10038</string></PostalCode><Country><string>US</string></Country><FormattedAddress><string>999999 William St, New York NY 10038</string></FormattedAddress></Address></ResultData><ResultData><MailabilityScore>1</MailabilityScore><ResultPercentage>72.5</ResultPercentage><Address><Street><string>999 William St</string></Street><FormattedAddress><string>999 William St, New York NY 10038</string></FormattedAddress></Address></ResultData></ResultDataSet></Result></ProcessResult>';
+  const result = normalizeAddressDoctorResponse(xml);
+  assert.equal(result.action, 'CONFIRM');
+  assert.equal(result.formattedAddress, '999999 William St, New York NY 10038');
+  assert.equal(result.uspsDeliverable, false);
+  assert.equal(result.diagnostics.processStatus, 'I3');
+  assert.equal(result.diagnostics.resultPercentage, 75.09);
 });
 
 test('throws when ProcessResult is missing', () => {
@@ -67,11 +90,14 @@ test('maps V4 perfect match to ACCEPT', () => {
   assert.equal(normalizeAddressDoctorResponse(xml).action, 'ACCEPT');
 });
 
-test('maps not processed, web service, low I score, and unknown statuses to FIX', () => {
+test('maps not processed, web service, incomplete suggestions, and unknown statuses to FIX', () => {
   const base = (status, score = 5) => `<ProcessResult><Result><ProcessStatus>${status}</ProcessStatus><ResultDataSet><ResultData><MailabilityScore>${score}</MailabilityScore><ResultPercentage>90</ResultPercentage><Address><Street><string>Main St</string></Street><FormattedAddress><string>Main St</string></FormattedAddress></Address></ResultData></ResultDataSet></Result></ProcessResult>`;
   assert.equal(normalizeAddressDoctorResponse(base('N1')).action, 'FIX');
   assert.equal(normalizeAddressDoctorResponse(base('W8')).action, 'FIX');
-  assert.equal(normalizeAddressDoctorResponse(base('I3', 3)).action, 'FIX');
+  assert.equal(normalizeAddressDoctorResponse(base('Q0', 5)).action, 'CONFIRM');
+  assert.equal(normalizeAddressDoctorResponse(base('Q1', 5)).action, 'CONFIRM');
+  assert.equal(normalizeAddressDoctorResponse('<ProcessResult><Result><ProcessStatus>Q0</ProcessStatus><ResultDataSet><ResultData><MailabilityScore>5</MailabilityScore><ResultPercentage>90</ResultPercentage><Address></Address></ResultData></ResultDataSet></Result></ProcessResult>').action, 'FIX');
+  assert.equal(normalizeAddressDoctorResponse('<ProcessResult><Result><ProcessStatus>Q1</ProcessStatus><ResultDataSet><ResultData><MailabilityScore>5</MailabilityScore><ResultPercentage>90</ResultPercentage><Address></Address></ResultData></ResultDataSet></Result></ProcessResult>').action, 'FIX');
   assert.equal(normalizeAddressDoctorResponse(base('Z9')).action, 'FIX');
 });
 
@@ -99,6 +125,8 @@ test('test internals cover XML helpers and edge cases', () => {
   assert.equal(stripHouseNumber('Park St', '100'), 'Park St');
   assert.equal(actionFor('V3', 5, 100, [{ types: ['route'] }], 'Main St'), 'CONFIRM');
   assert.equal(actionFor('C4', 1, 100, [{ types: ['route'] }], 'Main St'), 'FIX');
+  assert.equal(actionFor('I3', 0, 0, [], null), 'CONFIRM_UNVALIDATED');
+  assert.equal(actionFor('I3', 0, 0, [{ types: ['route'] }], 'Main St'), 'CONFIRM');
   assert.equal(actionFor(null, 5, 100, [{ types: ['route'] }], 'Main St'), 'FIX');
   assert.equal(actionFor('V4', 5, 100, [{ types: ['route'] }], null), 'FIX');
   assert.deepEqual(component('', 'short', 'country'), { longText: 'short', shortText: 'short', types: ['country'] });

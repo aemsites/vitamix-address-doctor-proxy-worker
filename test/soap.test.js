@@ -18,6 +18,8 @@ const config = {
   processMode: 'INTERACTIVE',
   defaultCountryISO3: 'USA',
   countryType: 'ISO2',
+  matchingScope: 'DELIVERYPOINT_LEVEL',
+  transactionPool: 'PRODUCTION',
   timeoutMs: 100,
   maxResultCount: 5,
 };
@@ -41,17 +43,23 @@ test('buildSoapEnvelope maps structured fields and escapes secrets/input', () =>
   }, config);
   assert.match(xml, /<login>id&amp;&lt;<\/login>/);
   assert.match(xml, /<password>pw&quot;&apos;<\/password>/);
-  assert.match(xml, /<JobToken>job-1<\/JobToken>/);
+  assert.match(xml, /<ServiceParameters><JobToken>job-1<\/JobToken><UseTransactionPool>PRODUCTION<\/UseTransactionPool><\/ServiceParameters>/);
+  assert.match(xml, /<ProcessMode>INTERACTIVE<\/ProcessMode>/);
   assert.match(xml, /<MaxResultCount>5<\/MaxResultCount>/);
-  assert.match(xml, /<MatchingScope>ALL<\/MatchingScope>/);
+  assert.match(xml, /<MatchingScope>DELIVERYPOINT_LEVEL<\/MatchingScope>/);
+  assert.match(xml, /<StandardizeInvalidAddresses>true<\/StandardizeInvalidAddresses>/);
+  assert.match(xml, /<RangesToExpand>ALL<\/RangesToExpand>/);
+  assert.match(xml, /<MatchingAlternatives>ALL<\/MatchingAlternatives>/);
   assert.match(xml, /<Locality><string>New &lt;York&gt;<\/string><\/Locality>/);
   assert.match(xml, /<DeliveryAddressLines><string>100 &amp; Park St Apt &quot;2&quot;<\/string><\/DeliveryAddressLines>/);
   assert.doesNotMatch(xml, /<AddressComplete>/);
   assert.doesNotMatch(xml, /<Street>/);
 });
 
-test('buildSoapEnvelope omits empty optional fields and job token', () => {
-  const xml = buildSoapEnvelope({ addressLines: ['Line 1'], regionCode: 'CA' }, { ...config, jobToken: '', maxResultCount: 0 });
+test('buildSoapEnvelope omits empty optional fields and service parameters', () => {
+  const xml = buildSoapEnvelope({ addressLines: ['Line 1'], regionCode: 'CA' }, {
+    ...config, jobToken: '', transactionPool: '', maxResultCount: 0,
+  });
   assert.doesNotMatch(xml, /ServiceParameters/);
   assert.match(xml, /<DeliveryAddressLines><string>Line 1<\/string><\/DeliveryAddressLines>/);
   assert.match(xml, /<Country><string>CA<\/string><\/Country>/);

@@ -20,6 +20,8 @@ test('loadConfig applies defaults and validates numeric vars', () => {
   assert.equal(config.processMode, 'INTERACTIVE');
   assert.equal(config.defaultCountryISO3, 'USA');
   assert.equal(config.countryType, 'ISO2');
+  assert.equal(config.matchingScope, 'DELIVERYPOINT_LEVEL');
+  assert.equal(config.transactionPool, 'PRODUCTION');
   assert.equal(config.timeoutMs, 5000);
   assert.equal(config.maxResultCount, 0);
 });
@@ -44,6 +46,8 @@ test('loadConfig uses supplied values', () => {
     ADDRESS_DOCTOR_PROCESS_MODE: 'FASTCOMPLETION',
     ADDRESS_DOCTOR_DEFAULT_COUNTRY_ISO3: 'CAN',
     ADDRESS_DOCTOR_COUNTRY_TYPE: 'ISO3',
+    ADDRESS_DOCTOR_MATCHING_SCOPE: 'ALL',
+    ADDRESS_DOCTOR_TRANSACTION_POOL: 'TEST',
     ADDRESS_DOCTOR_TIMEOUT_MS: '1',
     ADDRESS_DOCTOR_MAX_RESULT_COUNT: '5',
   });
@@ -52,6 +56,8 @@ test('loadConfig uses supplied values', () => {
   assert.equal(config.processMode, 'FASTCOMPLETION');
   assert.equal(config.defaultCountryISO3, 'CAN');
   assert.equal(config.countryType, 'ISO3');
+  assert.equal(config.matchingScope, 'ALL');
+  assert.equal(config.transactionPool, 'TEST');
   assert.equal(config.timeoutMs, 1);
   assert.equal(config.maxResultCount, 5);
 });
