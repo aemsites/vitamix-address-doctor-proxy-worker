@@ -17,6 +17,10 @@ function block(xml, name) {
   return match ? match[1] : '';
 }
 
+function blockCount(xml, name) {
+  return [...xml.matchAll(new RegExp(`<${name}(?:\\s[^>]*)?>`, 'gi'))].length;
+}
+
 function strings(addressXml, name) {
   const section = block(addressXml, name);
   if (!section) return [];
@@ -75,11 +79,11 @@ function formattedAddress(addressXml) {
   return complete ? complete.replaceAll(';', ', ') : null;
 }
 
-function actionFor(processStatus, mailabilityScore, resultPercentage, components, formatted) {
+function actionFor(processStatus, mailabilityScore, resultPercentage, components, formatted, hasAlternativeResults = false) {
   const category = processStatus?.[0] || '';
   if (['N', 'W'].includes(category)) return 'FIX';
   if (category === 'I') {
-    return formatted && components.length ? 'CONFIRM' : 'CONFIRM_UNVALIDATED';
+    return hasAlternativeResults && formatted && components.length ? 'CONFIRM' : 'CONFIRM_UNVALIDATED';
   }
   if (!formatted || !components.length) return 'FIX';
   if (category === 'V' && processStatus === 'V4' && resultPercentage >= 99) return 'ACCEPT';
@@ -95,13 +99,22 @@ export function normalizeAddressDoctorResponse(xml) {
   const statusMessage = first(result, 'StatusMessage');
   const processStatus = first(result, 'ProcessStatus');
   const countryISO3 = first(result, 'CountryISO3');
-  const resultData = block(result, 'ResultData');
+  const resultDataSet = block(result, 'ResultDataSet');
+  const resultData = block(resultDataSet, 'ResultData');
+  const hasAlternativeResults = blockCount(resultDataSet, 'ResultData') > 1;
   const address = block(resultData, 'Address');
   const mailabilityScore = numberValue(first(resultData, 'MailabilityScore')) ?? 0;
   const resultPercentage = numberValue(first(resultData, 'ResultPercentage')) ?? 0;
   const components = buildComponents(address);
   const formatted = formattedAddress(address);
-  const action = actionFor(processStatus, mailabilityScore, resultPercentage, components, formatted);
+  const action = actionFor(
+    processStatus,
+    mailabilityScore,
+    resultPercentage,
+    components,
+    formatted,
+    hasAlternativeResults,
+  );
 
   const unvalidated = action === 'CONFIRM_UNVALIDATED';
 
@@ -132,6 +145,7 @@ export const testInternals = {
   decodeXml,
   first,
   block,
+  blockCount,
   strings,
   numberValue,
   stripHouseNumber,
